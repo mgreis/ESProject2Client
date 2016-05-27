@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, Response, send_file
 
 import os
 import json
@@ -11,59 +11,40 @@ import decimal
 application = app = Flask(__name__)
 app.secret_key = os.urandom(64)
 
-# Helper class to convert a DynamoDB item to JSON.
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, decimal.Decimal):
-            if o % 1 > 0:
-                return float(o)
-            else:
-                return int(o)
-        return super(DecimalEncoder, self).default(o)
+'''
+Created on 27 de Mai de 2016
+
+@author:  mgreis, auxiliar
+'''
+
+sqs = boto3.resource('sqs')
+
+# Get the queue
+queue = sqs.get_queue_by_name(QueueName='queue')
+
+simple_db_client = boto3.client('sdb')
 
 
-#dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+def send_message (job_id, job_submitted, job_file):
+    queue.send_message(MessageBody='boto3', MessageAttributes={
+        'job_id': str (job_id),
+        'job_submitted': str(job_submitted),
+        'job_file': str(job_file)
+    })
 
-dynamodb = boto3.resource('dynamodb', endpoint_url="http://localhost:8000")
+def put_into_database(job_id,job_submitted,job_file):
+    return "hello"
 
-table = dynamodb.create_table(
-    TableName='Movies',
-    KeySchema=[
-        {
-            'AttributeName': 'year',
-            'KeyType': 'HASH'  #Partition key
-        },
-        {
-            'AttributeName': 'title',
-            'KeyType': 'RANGE'  #Sort key
-        }
-    ],
-    AttributeDefinitions=[
-        {
-            'AttributeName': 'year',
-            'AttributeType': 'N'
-        },
-        {
-            'AttributeName': 'title',
-            'AttributeType': 'S'
-        },
 
-    ],
-    ProvisionedThroughput={
-        'ReadCapacityUnits': 10,
-        'WriteCapacityUnits': 10
-    }
-)
 
-print("Table status:", table.table_status)
 
 
 def decode_boto3(string):
 
-    filename = "images/" + str(uuid.uuid4()) + ".txt"
+    filename = str(uuid.uuid4()) + ".txt"
     s3 = boto3.resource('s3')
 
-    s3.Bucket('eu-west-1-mgreis-es-instance1').put_object(Key=filename, Body=base64.b64decode(string))
+    s3.Bucket('eu-west-1-mgreis-es-instance1').put_object(Key=filename, Body=string)
 
     return "https://s3-eu-west-1.amazonaws.com/eu-west-1-mgreis-es-instance1/" + filename
 
@@ -75,11 +56,42 @@ def delete_boto3(url):
     s3.Object('eu-west-1-mgreis-es-instance1', filename).delete()
 
 def get_jobs():
-    return '{"job_id" : "1","job_submitted" : "123456", "job_started" : "123457", "job_finished" : "123458", "job_file": "exp.txt"}'
+    string=  '[{"job_id": "1", "job_state": "submitted", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp.txt"},{"job_id": "2", "job_state": "started", "job_submitted": "123456", "job_started": "123457", "job_finished": "123458", "job_file": "exp2.txt"},{"job_id": "3", "job_state": "finished", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp3.txt"}]'
+    return Response(string, mimetype='application/json',
+                    headers={'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*'})
+
+
+@app.route('/templates/<path:filename>', methods=['GET', 'POST'])
+def return_files_tut(filename):
+    try:
+        print(filename)
+        return send_file('templates/' + filename, attachment_filename=filename)
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/css/<path:filename>', methods=['GET', 'POST'])
+def return_files_tut2(filename):
+    try:
+        print(filename)
+        return send_file('css/' + filename, attachment_filename=filename)
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/images/<path:filename>', methods=['GET', 'POST'])
+def return_files_tut3(filename):
+    try:
+        print(filename)
+        return send_file('images/' + filename, attachment_filename=filename)
+    except Exception as e:
+        return str(e)
+
+
 
 
 @app.route('/')
-def main(name=None):
+def main():
     return render_template('index.html')
 
 
@@ -89,12 +101,10 @@ def manage_jobs_react():
         return get_jobs()
 
     if request.method == 'POST':
-        return '{"job_id" : "1","job_submitted" : "123456", "job_started" : "123457", "job_finished" : "123458", "job_file": "exp.txt"}'
+        return get_jobs()
 
     if request.method == 'DELETE':
-        return '{"job_id" : "1","job_submitted" : "123456", "job_started" : "123457", "job_finished" : "123458", "job_file": "exp.txt"}'
-
-
+        return get_jobs()
 
 
 
