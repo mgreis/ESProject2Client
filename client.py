@@ -29,21 +29,6 @@ sdb.create_domain(DomainName="ES2016")  # create Domain
 #sdb.delete_domain (DomainName='ES2016')
 print (sdb.list_domains())
 
-#sdb.put_attributes(DomainName="ES2016", ItemName='hello2',
- #                 Attributes=[{'Name': 'blah', 'Value': 'Unprocessed'}])  # new job in SDB
-#sdb.put_attributes(DomainName="ES2016", ItemName='blah',
-#                   Attributes=[{'Name': 'blah2', 'Value': 'Unprocessed'}])  # new job in SDB
-#output = sdb.get_attributes(DomainName="ES2016", ItemName='blah')
-#print (output)
-#print (output.get("Attributes")[0].get("Name"))
-
-
-
-
-print ('piu!')
-answer = sdb.select(SelectExpression="select * from ES2016")
-print (answer)
-#print (str(answer.get("Items")[0].get("Attributes")))
 
 def decode_boto3(string):
 
@@ -61,15 +46,11 @@ def delete_boto3(url):
     print(filename)
     s3.Object('eu-west-1-mgreis-es-instance1', filename).delete()
 
+def delete_job(job_id):
+
+
 def get_jobs():
-
-
-
-    #string=  '[{"job_id": "1", "job_state": "submitted", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp.txt"},{"job_id": "2", "job_state": "started", "job_submitted": "123456", "job_started": "123457", "job_finished": "123458", "job_file": "exp2.txt"},{"job_id": "3", "job_state": "finished", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp3.txt"}]'
-
     answer = sdb.select(SelectExpression="select * from ES2016")
-    print ("hello!")
-    print(answer)
     string = []
 
     if "Items" in answer:
@@ -77,14 +58,13 @@ def get_jobs():
     else:
         string = []
 
-    print (string)
     string2 = []
     for i in string:
-        print (i.get('Value'))
         string2.append(json.dumps(i.get('Value')))
-    exp = json.dumps(string2)
-    print ("id"+ exp)
-    return Response(string2, mimetype='application/json',
+    out = "[ " + " , ".join(string2) + " ]"
+    out = out.replace("\"", "")
+    out = out.replace("'", "\"")
+    return Response(out, mimetype='application/json',
                     headers={'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*'})
 
 def post_job(job_submitted):
@@ -155,6 +135,7 @@ def manage_jobs_react():
 
     if request.method == 'DELETE':
         print(request.form['job_id'])
+        delete_job(request.form['job_id'])
         return get_jobs()
 
 
