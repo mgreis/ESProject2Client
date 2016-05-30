@@ -25,7 +25,25 @@ queue = sqs.get_queue_by_name(QueueName='queue')
 
 sdb = boto3.client('sdb')  # Simple DB
 
-response = sdb.create_domain(DomainName="ES2016")  # create Domain
+sdb.create_domain(DomainName="ES2016")  # create Domain
+#sdb.delete_domain (DomainName='ES2016')
+print (sdb.list_domains())
+
+#sdb.put_attributes(DomainName="ES2016", ItemName='hello2',
+ #                 Attributes=[{'Name': 'blah', 'Value': 'Unprocessed'}])  # new job in SDB
+#sdb.put_attributes(DomainName="ES2016", ItemName='blah',
+#                   Attributes=[{'Name': 'blah2', 'Value': 'Unprocessed'}])  # new job in SDB
+#output = sdb.get_attributes(DomainName="ES2016", ItemName='blah')
+#print (output)
+#print (output.get("Attributes")[0].get("Name"))
+
+
+
+
+print ('piu!')
+answer = sdb.select(SelectExpression="select * from ES2016")
+print (answer)
+#print (str(answer.get("Items")[0].get("Attributes")))
 
 def decode_boto3(string):
 
@@ -44,13 +62,38 @@ def delete_boto3(url):
     s3.Object('eu-west-1-mgreis-es-instance1', filename).delete()
 
 def get_jobs():
-    string=  '[{"job_id": "1", "job_state": "submitted", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp.txt"},{"job_id": "2", "job_state": "started", "job_submitted": "123456", "job_started": "123457", "job_finished": "123458", "job_file": "exp2.txt"},{"job_id": "3", "job_state": "finished", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp3.txt"}]'
+
+
+
+    #string=  '[{"job_id": "1", "job_state": "submitted", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp.txt"},{"job_id": "2", "job_state": "started", "job_submitted": "123456", "job_started": "123457", "job_finished": "123458", "job_file": "exp2.txt"},{"job_id": "3", "job_state": "finished", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp3.txt"}]'
+
+    answer = sdb.select(SelectExpression="select * from ES2016")
+    print ("hello!")
+    print(answer)
+    string = []
+
+    if "Items" in answer:
+        string = answer.get("Items")[0].get("Attributes")
+    else:
+        string = []
+
     print (string)
-    return Response(string, mimetype='application/json',
+    string2 = []
+    for i in string:
+        print (i.get('Value'))
+        string2.append(json.dumps(i.get('Value')))
+    exp = json.dumps(string2)
+    print ("id"+ exp)
+    return Response(string2, mimetype='application/json',
                     headers={'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*'})
 
 def post_job(job_submitted):
-    print (job_submitted)
+    print('post 1')
+    value = str({"job_id": str(job_submitted), "job_state": "submitted", "job_submitted": str(job_submitted), "job_started": "-1","job_finished": "-1", "job_file": "exp.txt"})
+    print ("This "+value)
+    sdb.put_attributes(DomainName="ES2016", ItemName='jobs',
+                     Attributes= [{'Name': str(job_submitted), 'Value': value}])  # new job in SDB
+    print('post 2')
 
 
 def put_into_database(job_id,job_submitted,job_file):
@@ -107,6 +150,7 @@ def manage_jobs_react():
 
     if request.method == 'POST':
         print(request.form['job_submitted'])
+        post_job(request.form['job_submitted'])
         return get_jobs()
 
     if request.method == 'DELETE':
@@ -117,7 +161,7 @@ def manage_jobs_react():
 
 
 if __name__ == "__main__":
-    application.debug = True
+    #application.debug = True
     application.run(host="0.0.0.0")
 
 

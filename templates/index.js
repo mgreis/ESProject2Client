@@ -14,7 +14,6 @@ var JobBox = React.createClass({
     });
   },
   handleJobSubmit: function(job) {
-      window.alert("hello!");
       var jobs = this.state.data;
       job.job_id = Date.now();
       var newJobs = jobs.concat([job]);
@@ -166,7 +165,7 @@ var DeleteJobForm = React.createClass({
 
 ReactDOM.render(
     <JobBox url="/manage_jobs_react"
-            pollInterval = {10000}
+            pollInterval = {100000}
     />,
 
     document.getElementById('content')
