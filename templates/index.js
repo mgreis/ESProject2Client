@@ -14,11 +14,12 @@ var JobBox = React.createClass({
     });
   },
   handleJobSubmit: function(job) {
-    var jobs = this.state.data;
-    job.id = Date.now();
-    var newJobs = jobs.concat([job]);
-    this.setState({data: newJobs});
-    $.ajax({
+      window.alert("hello!");
+      var jobs = this.state.data;
+      job.job_id = Date.now();
+      var newJobs = jobs.concat([job]);
+      this.setState({data: newJobs});
+      $.ajax({
       url: this.props.url,
       dataType: 'json',
       type: 'POST',
@@ -28,6 +29,20 @@ var JobBox = React.createClass({
       }.bind(this),
       error: function(xhr, status, err) {
         this.setState({data: jobs});
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+    handleJobDelete: function(job) {
+      $.ajax({
+      url: this.props.url,
+      dataType: 'json',
+      type: 'delete',
+      data: job,
+      success: function(data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
@@ -44,7 +59,7 @@ var JobBox = React.createClass({
       <div className="jobBox">
         <h1>Jobs</h1>
         <JobForm onJobSubmit={this.handleJobSubmit} />
-        <JobList data={this.state.data} />
+        <JobList data = {this.state.data} onJobDelete = {this.handleJobDelete} />
 
       </div>
     );
@@ -53,6 +68,8 @@ var JobBox = React.createClass({
 
 var JobList = React.createClass({
   render: function() {
+      var onJobDelete   = this.props.onJobDelete;
+
     var jobNodes = this.props.data.map(function(job) {
       return (
         <Job  key           = {job.job_id}
@@ -62,6 +79,8 @@ var JobList = React.createClass({
               job_started   = {job.job_started}
               job_finished  = {job.job_finished}
               job_file      = {job.job_file}
+              onJobDelete   = {onJobDelete}
+
         >
         </Job>
       );
@@ -78,6 +97,8 @@ var Job = React.createClass({
 
 
   render: function() {
+       var onJobDelete   = this.props.onJobDelete;
+
     return (
       <div className="job">
           <br/>
@@ -89,6 +110,7 @@ var Job = React.createClass({
                 Finished on:  {this.props.job_finished}<br/>
                 File name:    {this.props.job_file}<br/><br/>
             </p>
+          <DeleteJobForm onJobDelete = {onJobDelete} job_id = {this.props.job_id}/>
       </div>
     );
   }
@@ -96,43 +118,45 @@ var Job = React.createClass({
 
 var JobForm = React.createClass({
   getInitialState: function() {
-    return {author: '', text: ''};
-  },
-  handleAuthorChange: function(e) {
-    this.setState({author: e.target.value});
-  },
-  handleTextChange: function(e) {
-    this.setState({text: e.target.value});
+      return {job_id: '-1', job_state: 'submitted', job_submitted : '-1', job_started: '-1', job_finished:'-1', job_file:'-1'};
   },
   handleSubmit: function(e) {
-    e.preventDefault();
-    var author = this.state.author.trim();
-    var text = this.state.text.trim();
-    if (!text || !author) {
-      return;
-    }
-    this.props.onJobSubmit({author: author, text: text});
-    this.setState({author: '', text: ''});
+      //window.alert('hellosubmit');
+      e.preventDefault();
+      var job_submitted = Date.now().toString().trim();
+
+      if (!job_submitted) {
+          return;
+      }
+      this.props.onJobSubmit({job_id: '-1', job_state: 'submitted', job_submitted : job_submitted , job_started: '-1', job_finished:'-1', job_file:'-1'});
+      this.setState({job_id: '-1', job_state: 'submitted', job_submitted : '-1', job_started: '-1', job_finished:'-1', job_file:'-1'});
   },
-  render: function() {
-    return (
-      <form className="jobForm" onSubmit={this.handleSubmit}>
-        <input
-          type="text"
-          placeholder="Your name"
-          value={this.state.author}
-          onChange={this.handleAuthorChange}
-        /><br/>
-        <input
-          type="text"
-          placeholder="Say something..."
-          value={this.state.text}
-          onChange={this.handleTextChange}
-        /><br/>
-        <input type="submit" value="Post" />
-      </form>
-    );
-  }
+    render: function() {
+        return (
+            <form className="jobForm" onSubmit={this.handleSubmit}>
+                <input type="submit" value="Post" />
+            </form>
+        );
+    }
+});
+
+var DeleteJobForm = React.createClass({
+  getInitialState: function() {
+      var job_id = this.props.job_id;
+      return {job_id: {job_id}};
+  },
+  handleSubmit: function(e) {
+      var job_id = this.props.job_id;
+      this.props.onJobDelete({job_id: {job_id}});
+      this.setState({job_id: {job_id}});
+  },
+    render: function() {
+        return (
+            <form className="jobForm" onSubmit={this.handleSubmit}>
+                <input type="submit" value="DELETE" />
+            </form>
+        );
+    }
 });
 
 
@@ -143,7 +167,7 @@ var JobForm = React.createClass({
 ReactDOM.render(
     <JobBox url="/manage_jobs_react"
             pollInterval = {10000}
-            />,
+    />,
 
     document.getElementById('content')
 );

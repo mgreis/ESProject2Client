@@ -22,22 +22,10 @@ sqs = boto3.resource('sqs')
 # Get the queue
 queue = sqs.get_queue_by_name(QueueName='queue')
 
-simple_db_client = boto3.client('sdb')
 
+sdb = boto3.client('sdb')  # Simple DB
 
-def send_message (job_id, job_submitted, job_file):
-    queue.send_message(MessageBody='boto3', MessageAttributes={
-        'job_id': str (job_id),
-        'job_submitted': str(job_submitted),
-        'job_file': str(job_file)
-    })
-
-def put_into_database(job_id,job_submitted,job_file):
-    return "hello"
-
-
-
-
+response = sdb.create_domain(DomainName="ES2016")  # create Domain
 
 def decode_boto3(string):
 
@@ -60,6 +48,22 @@ def get_jobs():
     print (string)
     return Response(string, mimetype='application/json',
                     headers={'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*'})
+
+def post_job(job_submitted):
+    print (job_submitted)
+
+
+def put_into_database(job_id,job_submitted,job_file):
+    return "hello"
+
+def send_message (job_id, job_submitted, job_file):
+    queue.send_message(MessageBody='boto3', MessageAttributes={
+        'job_id': str (job_id),
+        'job_submitted': str(job_submitted),
+        'job_file': str(job_file)
+    })
+
+
 
 
 @app.route('/templates/<path:filename>', methods=['GET', 'POST'])
@@ -102,9 +106,11 @@ def manage_jobs_react():
         return get_jobs()
 
     if request.method == 'POST':
+        print(request.form['job_submitted'])
         return get_jobs()
 
     if request.method == 'DELETE':
+        print(request.form['job_id'])
         return get_jobs()
 
 
