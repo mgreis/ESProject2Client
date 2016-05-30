@@ -57,6 +57,7 @@ def delete_boto3(url):
 
 def get_jobs():
     string=  '[{"job_id": "1", "job_state": "submitted", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp.txt"},{"job_id": "2", "job_state": "started", "job_submitted": "123456", "job_started": "123457", "job_finished": "123458", "job_file": "exp2.txt"},{"job_id": "3", "job_state": "finished", "job_submitted": "123456", "job_started": "123457","job_finished": "123458", "job_file": "exp3.txt"}]'
+    print (string)
     return Response(string, mimetype='application/json',
                     headers={'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*'})
 
