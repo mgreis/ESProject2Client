@@ -47,7 +47,20 @@ def delete_boto3(url):
     s3.Object('eu-west-1-mgreis-es-instance1', filename).delete()
 
 def delete_job(job_id):
+    answer = sdb.select(SelectExpression="select * from ES2016")
+    string = []
+    string = answer.get("Items")[0].get("Attributes")
 
+    string2 = ""
+    for i in string:
+        print (i.get ('Name'))
+        print (job_id)
+        if str(i.get('Name')) == job_id:
+            string2 = str(i.get('Value'))
+            print(string2)
+
+    sdb.delete_attributes(DomainName="ES2016", ItemName='jobs',
+                                        Attributes=[{'Name': job_id, 'Value': string2}])
 
 def get_jobs():
     answer = sdb.select(SelectExpression="select * from ES2016")
@@ -68,12 +81,12 @@ def get_jobs():
                     headers={'Cache-Control': 'no-cache', 'Access-Control-Allow-Origin': '*'})
 
 def post_job(job_submitted):
-    print('post 1')
+
     value = str({"job_id": str(job_submitted), "job_state": "submitted", "job_submitted": str(job_submitted), "job_started": "-1","job_finished": "-1", "job_file": "exp.txt"})
     print ("This "+value)
     sdb.put_attributes(DomainName="ES2016", ItemName='jobs',
                      Attributes= [{'Name': str(job_submitted), 'Value': value}])  # new job in SDB
-    print('post 2')
+
 
 
 def put_into_database(job_id,job_submitted,job_file):

@@ -33,6 +33,7 @@ var JobBox = React.createClass({
     });
   },
     handleJobDelete: function(job) {
+        window.alert(job.job_id.toString())
       $.ajax({
       url: this.props.url,
       dataType: 'json',
@@ -141,12 +142,14 @@ var JobForm = React.createClass({
 
 var DeleteJobForm = React.createClass({
   getInitialState: function() {
-      var job_id = this.props.job_id;
+      var job_id = this.props.job_id.toString().trim();
       return {job_id: {job_id}};
   },
   handleSubmit: function(e) {
-      var job_id = this.props.job_id;
-      this.props.onJobDelete({job_id: {job_id}});
+      e.preventDefault();
+      var job_id = this.props.job_id.toString().trim();;
+      this.props.onJobDelete({job_id: job_id});
+      window.alert(job_id)
       this.setState({job_id: {job_id}});
   },
     render: function() {
