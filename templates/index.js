@@ -33,7 +33,7 @@ var JobBox = React.createClass({
     });
   },
     handleJobDelete: function(job) {
-        window.alert(job.job_id.toString())
+        //window.alert(job.job_id.toString())
       $.ajax({
       url: this.props.url,
       dataType: 'json',
@@ -110,7 +110,7 @@ var Job = React.createClass({
                 Finished on:  {this.props.job_finished}<br/>
                 File name:    {this.props.job_file}<br/><br/>
             </p>
-          <DeleteJobForm onJobDelete = {onJobDelete} job_id = {this.props.job_id}/>
+          <DeleteJobForm onJobDelete = {onJobDelete} job_id = {this.props.job_id} job_file = {this.props.job_file}/>
       </div>
     );
   }
@@ -143,14 +143,16 @@ var JobForm = React.createClass({
 var DeleteJobForm = React.createClass({
   getInitialState: function() {
       var job_id = this.props.job_id.toString().trim();
-      return {job_id: {job_id}};
+      var job_file = this.props.job_file.toString().trim();
+      return {job_id: {job_id},job_file: {job_file}};
   },
   handleSubmit: function(e) {
       e.preventDefault();
-      var job_id = this.props.job_id.toString().trim();;
-      this.props.onJobDelete({job_id: job_id});
-      window.alert(job_id)
-      this.setState({job_id: {job_id}});
+      var job_id = this.props.job_id.toString().trim();
+      var job_file = this.props.job_file.toString().trim();
+      this.props.onJobDelete({job_id: job_id, job_file: job_file});
+      //window.alert(job_id)
+      this.setState({job_id: {job_id},job_file:job_file});
   },
     render: function() {
         return (
